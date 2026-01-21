@@ -12,6 +12,10 @@ export type OscillatorSettings = {
   minVol: number;
   maxVol: number;
   oscillatorType: OscillatorType;
+  // Tone.js Extensions
+  reverbWet: number;
+  delayWet: number;
+  synthType: "fm" | "am" | "poly";
 };
 
 type PipelineState = {
@@ -45,11 +49,15 @@ type PipelineActions = {
 };
 
 const defaultOscillator: OscillatorSettings = {
-  minFreq: 200,
-  maxFreq: 700,
-  minVol: 0,
-  maxVol: 0.2,
+  minFreq: 150,
+  maxFreq: 800,
+  minVol: 0.05,
+  maxVol: 0.6,
   oscillatorType: "sine",
+  // Tone default settings
+  reverbWet: 0.3,
+  delayWet: 0.2,
+  synthType: "fm",
 };
 
 const defaultPreferences = {

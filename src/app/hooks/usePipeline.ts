@@ -6,7 +6,7 @@ import { MediaPipePointDetector } from "#src/detection/mediapipe/MediaPipePointD
 import type { HandOverlayStyle } from "#src/detection/mediapipe/overlay";
 import { bindHandsUi } from "#src/detection/mediapipe/uiHands";
 import { HSVImageSampler } from "#src/sampling/hsv/HSVImageSampler";
-import { OscillatorSonifier } from "#src/sonification/oscillator/OscillatorSonifier";
+import { ToneSonifier } from "#src/sonification/tone/ToneSonifier";
 import { curatedImages } from "../data/curatedImages";
 import { usePipelineStore } from "../state/pipelineStore";
 
@@ -78,7 +78,7 @@ export const usePipeline = ({
 
   const detectorRef = useRef<MediaPipePointDetector | null>(null);
   const samplerRef = useRef<HSVImageSampler | null>(null);
-  const sonifierRef = useRef<OscillatorSonifier | null>(null);
+  const sonifierRef = useRef<ToneSonifier | null>(null);
   const controllerRef = useRef<ApplicationController | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const imageBufferRef = useRef<HTMLImageElement | null>(null);
@@ -167,13 +167,25 @@ export const usePipeline = ({
       setStatus("initializing");
       const snapshot = usePipelineStore.getState();
       samplerRef.current = new HSVImageSampler();
-      sonifierRef.current = new OscillatorSonifier(undefined, {
+      // Initialize ToneSonifier instead of OscillatorSonifier
+      sonifierRef.current = new ToneSonifier({
         minFreq: snapshot.oscillator.minFreq,
         maxFreq: snapshot.oscillator.maxFreq,
         minVol: snapshot.oscillator.minVol,
         maxVol: snapshot.oscillator.maxVol,
         oscillatorType: snapshot.oscillator.oscillatorType,
+        reverbWet: snapshot.oscillator.reverbWet,
+        delayWet: snapshot.oscillator.delayWet,
+        synthType: snapshot.oscillator.synthType,
       });
+
+      // Initialize the sonifier (starts Tone.context)
+      await sonifierRef.current.initialize();
+      // Attempt to resume audio context (will fail if no user gesture, but shouldn't block pipeline)
+      sonifierRef.current.resume().catch((e) => {
+        console.warn("AudioContext resume failed (waiting for user interaction):", e);
+      });
+
       detectorRef.current = new MediaPipePointDetector(videoRef.current, {
         maxHands: snapshot.maxHands,
         mirrorX: snapshot.mirror,
