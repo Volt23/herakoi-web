@@ -1,0 +1,303 @@
+import { Maximize, Minimize, SlidersHorizontal } from "lucide-react";
+import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { EngineStatusAnnouncer } from "./components/EngineStatusAnnouncer";
+import { BrandMark } from "./components/header/BrandMark";
+import { Controls } from "./components/header/Controls";
+import { NotificationArea } from "./components/NotificationArea";
+import { SettingsPanel } from "./components/SettingsPanel";
+import { engineConfig } from "./engineConfig";
+import { usePluginUi } from "./hooks/plugin";
+import { useIdleDimmer, useUiDimFade } from "./hooks/ui";
+import { useSonificationEngine } from "./hooks/useSonificationEngine";
+import { PluginNotification } from "./shared/components/notifications/PluginNotification";
+import { useUiPreferences } from "./state/appConfigStore";
+
+const App = () => {
+  const imageCanvasRef = useRef<HTMLCanvasElement>(null);
+  const imageOverlayRef = useRef<HTMLCanvasElement>(null);
+  const logoRef = useRef<HTMLButtonElement>(null);
+  const transportButtonRef = useRef<HTMLButtonElement>(null);
+
+  const {
+    startTransport,
+    stopTransport,
+    restartEngine,
+    engineStatus,
+    transportStatus,
+    analyser,
+    visualizerFrameDataRef,
+  } = useSonificationEngine(engineConfig, {
+    imageCanvasRef,
+    imageOverlayRef,
+  });
+  const [uiPrefs] = useUiPreferences();
+  const dimLogoMark = uiPrefs.dimLogoMark;
+
+  // Idle dimming: dim UI after idle when points are detected
+  useIdleDimmer({ baseOpacity: uiPrefs.baseUiOpacity });
+
+  const {
+    sections,
+    SamplingToolbar,
+    SonificationPanel,
+    DockPanel,
+    VisualizerDisplays,
+    PluginNotificationComponents,
+  } = usePluginUi({
+    config: engineConfig,
+    startTransport,
+    stopTransport,
+  });
+
+  const isRunning = transportStatus.status === "running";
+  const isInitializing = engineStatus === "initializing";
+  const isActive = isRunning || isInitializing;
+
+  const { uiFadeStyle, uiDimmed } = useUiDimFade();
+  const [autoStartEnabled, setAutoStartEnabled] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const fullscreenAvailable =
+    typeof document !== "undefined" && Boolean(document.fullscreenEnabled);
+  const [fullscreenNotice, setFullscreenNotice] = useState<{
+    message: string;
+    icon: typeof Maximize | typeof Minimize;
+  } | null>(null);
+  const [showFullscreenHint, setShowFullscreenHint] = useState(fullscreenAvailable);
+  const [showPluginSwitchHint, setShowPluginSwitchHint] = useState(true);
+  const fullscreenNoticeTimeoutRef = useRef<number | null>(null);
+  const fullscreenSyncReadyRef = useRef(false);
+  const previousFullscreenRef = useRef(false);
+
+  const showFullscreenNotice = useCallback(
+    (notice: { message: string; icon: typeof Maximize | typeof Minimize }) => {
+      if (typeof window === "undefined") return;
+      if (fullscreenNoticeTimeoutRef.current) {
+        window.clearTimeout(fullscreenNoticeTimeoutRef.current);
+      }
+      setFullscreenNotice(notice);
+      fullscreenNoticeTimeoutRef.current = window.setTimeout(() => {
+        setFullscreenNotice(null);
+        fullscreenNoticeTimeoutRef.current = null;
+      }, 2200);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const syncFullscreenState = () => {
+      const nextFullscreen = Boolean(document.fullscreenElement);
+      setIsFullscreen(nextFullscreen);
+      if (!fullscreenSyncReadyRef.current) {
+        fullscreenSyncReadyRef.current = true;
+        previousFullscreenRef.current = nextFullscreen;
+        return;
+      }
+      if (nextFullscreen === previousFullscreenRef.current) return;
+      previousFullscreenRef.current = nextFullscreen;
+      showFullscreenNotice(
+        nextFullscreen
+          ? {
+              message: "Fullscreen enabled. Double-click anywhere to toggle.",
+              icon: Maximize,
+            }
+          : {
+              message: "Fullscreen disabled.",
+              icon: Minimize,
+            },
+      );
+    };
+    syncFullscreenState();
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+    };
+  }, [showFullscreenNotice]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window === "undefined") return;
+      if (fullscreenNoticeTimeoutRef.current) {
+        window.clearTimeout(fullscreenNoticeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (typeof document === "undefined") return;
+    if (!document.fullscreenEnabled) return;
+    setShowFullscreenHint(false);
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => {});
+      return;
+    }
+    void document.documentElement.requestFullscreen().catch(() => {});
+  };
+
+  const handleShellDoubleClick = (event: MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("button, a, input, select, textarea, [role='button']")) {
+      return;
+    }
+    toggleFullscreen();
+  };
+
+  useEffect(() => {
+    if (!autoStartEnabled) return;
+    if (engineStatus !== "ready") return;
+    if (transportStatus.status !== "stopped") return;
+    void startTransport();
+  }, [autoStartEnabled, engineStatus, startTransport, transportStatus.status]);
+
+  // On mobile, the browser suspends JS execution when a tab goes to background.
+  // The camera stream is killed by the OS, but React state is frozen too, so
+  // transportStatus may still read "running" when the tab resumes — the async
+  // iterator hasn't had a chance to throw yet. We therefore restart
+  // unconditionally (restartEngine handles a running transport gracefully).
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) return;
+      if (!autoStartEnabled) return;
+      if (engineStatus === "initializing") return;
+      restartEngine();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [autoStartEnabled, engineStatus, restartEngine]);
+
+  return (
+    <main
+      className="relative min-h-screen touch-none overscroll-none overflow-hidden bg-background text-foreground"
+      onDoubleClick={handleShellDoubleClick}
+    >
+      <a
+        href="#herakoi-main-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-foreground focus:ring-2 focus:ring-ring"
+      >
+        Skip to main content
+      </a>
+      <div className="absolute inset-0">
+        <canvas
+          ref={imageCanvasRef}
+          id="herakoi-main-canvas"
+          tabIndex={-1}
+          className="h-full w-full touch-none"
+          role="img"
+          aria-label="Herakoi audio-visualizer output"
+        />
+        {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: Overlay canvas is decorative and not interactive */}
+        <canvas
+          ref={imageOverlayRef}
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          aria-hidden="true"
+        />
+        {/* cos è sto div?? */}
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/55"
+          style={{
+            opacity: uiDimmed ? 0 : 1,
+            transitionProperty: "opacity",
+            transitionDuration: uiFadeStyle.transitionDuration,
+            transitionTimingFunction: uiFadeStyle.transitionTimingFunction,
+          }}
+          aria-hidden="true"
+        />
+      </div>
+
+      <NotificationArea>
+        {showFullscreenHint && !isFullscreen && !fullscreenNotice ? (
+          <PluginNotification
+            message="Tip: double-click the canvas or use the fullscreen button in controls."
+            icon={Maximize}
+            onDismiss={() => setShowFullscreenHint(false)}
+          />
+        ) : null}
+        {showPluginSwitchHint ? (
+          <PluginNotification
+            message="Tip: open Settings, then use the Plugin selector at the top of each tab to switch plugin."
+            icon={SlidersHorizontal}
+            onDismiss={() => setShowPluginSwitchHint(false)}
+          />
+        ) : null}
+        {fullscreenNotice ? (
+          <PluginNotification message={fullscreenNotice.message} icon={fullscreenNotice.icon} />
+        ) : null}
+        {PluginNotificationComponents.map(({ id, Notifications }) => (
+          <Notifications key={id} />
+        ))}
+      </NotificationArea>
+
+      <header className="pointer-events-none absolute left-2 right-2 top-3 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:left-1 sm:right-4 sm:top-4 sm:gap-2">
+        <div className="justify-self-start">
+          <BrandMark
+            analyserRef={analyser}
+            dimLogoMark={dimLogoMark}
+            uiFadeStyle={uiFadeStyle}
+            logoRef={logoRef}
+          />
+        </div>
+        <div
+          className="pointer-events-auto flex items-center justify-center transition-opacity"
+          style={uiFadeStyle}
+        >
+          {SamplingToolbar && <SamplingToolbar />}
+        </div>
+        <div
+          className="pointer-events-auto flex items-center justify-self-end gap-1.5 transition-opacity sm:gap-2"
+          style={uiFadeStyle}
+        >
+          <Controls
+            isActive={isActive}
+            isInitializing={isInitializing}
+            onStart={() => {
+              setAutoStartEnabled(true);
+              void startTransport();
+            }}
+            onStop={() => {
+              setAutoStartEnabled(false);
+              stopTransport();
+            }}
+            isFullscreen={isFullscreen}
+            fullscreenAvailable={fullscreenAvailable}
+            onToggleFullscreen={toggleFullscreen}
+            transportButtonRef={transportButtonRef}
+          />
+        </div>
+      </header>
+
+      <SettingsPanel sections={sections} className="transition-opacity" style={uiFadeStyle} />
+      {SonificationPanel ? (
+        <div className="transition-opacity" style={uiFadeStyle}>
+          <SonificationPanel />
+        </div>
+      ) : null}
+
+      {/* Render detection plugin's dock panel (if it has one) */}
+      {DockPanel ? (
+        <div className="transition-opacity" style={uiFadeStyle}>
+          <DockPanel
+            isRunning={isRunning}
+            isInitializing={isInitializing}
+            onStart={() => {
+              setAutoStartEnabled(true);
+              void startTransport();
+            }}
+            onStop={() => {
+              setAutoStartEnabled(false);
+              stopTransport();
+            }}
+          />
+        </div>
+      ) : null}
+
+      {/* Render active visualizer displays (outside dimmer) */}
+      {VisualizerDisplays.map(({ id, Display }) => (
+        <Display key={id} isRunning={isRunning} frameDataRef={visualizerFrameDataRef} />
+      ))}
+
+      <EngineStatusAnnouncer engineStatus={engineStatus} transportStatus={transportStatus} />
+    </main>
+  );
+};
+
+export default App;

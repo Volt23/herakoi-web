@@ -55,6 +55,10 @@ jobs:
         # We install with --frozen-lockfile so the workflow fails fast if the lock file and manifest ever drift.
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright browser runtime
+        # Browser-project specs require a real Chromium binary + OS deps on the CI runner.
+        run: pnpm dlx playwright@1.58.2 install --with-deps chromium
+
       - name: Run Biome lint
         # We stick to lint-only mode in CI; automated fixes stay a developer responsibility.
         run: pnpm run lint:biome
@@ -81,7 +85,7 @@ jobs:
         id: compute-build-hash
         run: |
           # We lean on GitHub’s hashFiles expression so the runner computes the digest before this script executes, letting us simply record the value for later comparisons.
-          echo "value=${{ hashFiles('src/**', 'public/**', 'legacy_html/**', 'index.html', 'one-channel.html', 'three-channel.html', 'package.json', 'pnpm-lock.yaml', 'tsconfig.json', 'tsconfig.node.json', 'vite.config.ts', 'postcss.config.cjs') }}" >> "$GITHUB_OUTPUT"
+          echo "value=${{ hashFiles('src/**', 'public/**', 'legacy_html/**', 'index.html', 'one-channel.html', 'three-channel.html', 'package.json', 'pnpm-lock.yaml', 'tsconfig.json', 'vite.config.ts', 'postcss.config.cjs') }}" >> "$GITHUB_OUTPUT"
 
       # We keep one cache key named build-hash so every run knows what we last deployed without relying on hash-derived cache keys that might drift from the actual Pages state.
       - name: Restore last build hash snapshot

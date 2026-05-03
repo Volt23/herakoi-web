@@ -1,33 +1,19 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Herakoi Image Sonification</title>
-    <link rel="stylesheet" href="/src/style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Herakoi Web</title>
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
   </head>
-  <body>
-    <main>
-      <h1>Herakoi Image Sonification</h1>
-      <p class="lead">Choose a demo to explore hand-tracked sonification.</p>
-      <ul class="demos">
-        <li>
-          <a href="%BASE_URL%modular.html">Modern (current development)</a>
-          <span>Modular entrypoint using swappable detector/sampler/sonifier stacks.</span>
-        </li>
-        <li>
-          <a href="%BASE_URL%one-channel.html">One Channel (deprecated)</a>
-          <span>Deprecated Vite build maintained for regression checks.</span>
-        </li>
-        <li>
-          <a href="%BASE_URL%legacy_html/herakoi_web_test/herakoi.html">One Channel (legacy)</a>
-          <span>Original HTML/JS prototype kept intact.</span>
-        </li>
-        <li>
-          <a href="%BASE_URL%legacy_html/herakoi_web_three_channels/html/index.html">Three Channels (legacy)</a>
-          <span>The reference multi-channel experience for regression checks.</span>
-        </li>
-      </ul>
-    </main>
+  <body class="dark">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- 100% privacy-first analytics -->
+    <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade"/></noscript>
   </body>
 </html>

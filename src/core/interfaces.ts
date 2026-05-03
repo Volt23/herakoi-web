@@ -1,5 +1,5 @@
 /**
- * Core interfaces for the Herakoi detection → sampling → sonification pipeline.
+ * Core interfaces for the Herakoi detection → sampling → sonification engine.
  *
  * These interfaces define the contracts between modules:
  * - PointDetector: Tracks points (e.g., fingertips) in normalized coordinates
@@ -10,7 +10,7 @@
  * - Normalized coordinates (0-1) for detector output
  * - Flexible key-value image data (supports different color spaces)
  * - Async initialization for heavy resources (models, audio context)
- * - Callback-based detection for real-time streaming
+ * - AsyncIterable-based detection streaming
  */
 
 /**
@@ -35,20 +35,20 @@ export interface DetectedPoint {
 }
 
 /**
- * Callback function invoked when new points are detected.
+ * Go-style result type where failures are returned as Error values.
  *
- * @param points Array of detected points in the current frame
+ * Success is represented by T (or undefined for void-style operations).
  */
-export type PointDetectionCallback = (points: DetectedPoint[]) => void;
+export type ErrorOr<T> = Error | T;
 
 /**
  * Detects points of interest (e.g., hand landmarks, face features) from video input.
  *
  * Implementations wrap different detection backends (MediaPipe, TensorFlow, etc.)
- * and emit normalized point coordinates via callback.
+ * and emit normalized point coordinates via async stream.
  *
  * Lifecycle:
- * 1. construct → 2. initialize() → 3. start() → [detection loop] → 4. stop()
+ * 1. construct → 2. initialize() → 3. start() → 4. consume points() → 5. stop()
  */
 export interface PointDetector {
   /**
@@ -57,19 +57,17 @@ export interface PointDetector {
    * This async operation may take several seconds for model loading.
    * Must be called before start().
    *
-   * @throws Error if initialization fails (e.g., no camera access, model load failure)
    */
-  initialize(): Promise<void>;
+  initialize(): Promise<ErrorOr<undefined>>;
 
   /**
    * Start the detection loop.
    *
-   * Begins processing video frames and invoking registered callbacks.
+   * Begins processing video frames.
    * Requires initialize() to have completed successfully.
    *
-   * @throws Error if called before initialize() or if already started
    */
-  start(): void;
+  start(): ErrorOr<undefined> | Promise<ErrorOr<undefined>>;
 
   /**
    * Stop the detection loop and release resources.
@@ -78,15 +76,8 @@ export interface PointDetector {
    */
   stop(): void;
 
-  /**
-   * Register a callback to receive detected points.
-   *
-   * Callback is invoked on each frame with detected points. Multiple callbacks
-   * can be registered and all will be invoked in registration order.
-   *
-   * @param callback Function to invoke with detected points
-   */
-  onPointsDetected(callback: PointDetectionCallback): void;
+  /** Stream point batches emitted by this detector over time. */
+  points(signal?: AbortSignal): AsyncIterable<DetectedPoint[]>;
 }
 
 /**
@@ -126,20 +117,19 @@ export interface ImageSampler {
    * Load an image for sampling.
    *
    * @param source Image source (URL, HTMLImageElement, canvas, etc.)
-   * @throws Error if image fails to load or is invalid
    */
-  loadImage(source: string | HTMLImageElement | HTMLCanvasElement): Promise<void>;
+  loadImage(source: string | HTMLImageElement | HTMLCanvasElement): Promise<ErrorOr<undefined>>;
 
   /**
-   * Sample image data at a detected point.
+   * Sample image data for detected points.
    *
-   * Converts normalized coordinates to pixel coordinates and extracts features.
-   * Returns null if point is out of bounds or no image is loaded.
+   * Converts normalized coordinates to pixel coordinates and extracts features
+   * for each point. Points out of bounds or unavailable are skipped.
    *
-   * @param point Detected point with normalized coordinates
-   * @returns Image sample or null if sampling failed
+   * @param points Detected points with normalized coordinates
+   * @returns Map of point ID -> sample data, or Error on runtime failure
    */
-  sampleAt(point: DetectedPoint): ImageSample | null;
+  sampleAt(points: DetectedPoint[]): ErrorOr<Map<string, ImageSample>>;
 }
 
 /**
@@ -174,9 +164,8 @@ export interface Sonifier {
    * Must be called before processSamples(). Some browsers require user gesture
    * before AudioContext can start.
    *
-   * @throws Error if Web Audio API is unavailable
    */
-  initialize(): Promise<void>;
+  initialize(): Promise<ErrorOr<undefined>>;
 
   /**
    * Process image samples and update audio output.
@@ -186,7 +175,7 @@ export interface Sonifier {
    *
    * @param samples Map of point ID → image sample for currently detected points
    */
-  processSamples(samples: Map<string, ImageSample>): void;
+  processSamples(samples: Map<string, ImageSample>): ErrorOr<undefined>;
 
   /**
    * Stop all audio and release resources.

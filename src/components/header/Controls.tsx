@@ -1,0 +1,64 @@
+import { Loader2, Maximize, Minimize, Play, Square } from "lucide-react";
+import type { RefObject } from "react";
+import { cn } from "#src/shared/utils/cn";
+
+type ControlsProps = {
+  isActive: boolean;
+  isInitializing: boolean;
+  onStart: () => void;
+  onStop: () => void;
+  isFullscreen: boolean;
+  fullscreenAvailable: boolean;
+  onToggleFullscreen: () => void;
+  transportButtonRef: RefObject<HTMLButtonElement>;
+};
+
+export const Controls = ({
+  isActive,
+  isInitializing,
+  onStart,
+  onStop,
+  isFullscreen,
+  fullscreenAvailable,
+  onToggleFullscreen,
+  transportButtonRef,
+}: ControlsProps) => {
+  return (
+    <>
+      <button
+        type="button"
+        className={cn(
+          "flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "border-border/50 bg-black/50 text-muted-foreground hover:bg-black/70 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50",
+          isFullscreen && "border-white/40 bg-white/10 text-white",
+        )}
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        onClick={onToggleFullscreen}
+        disabled={!fullscreenAvailable}
+      >
+        {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        className={cn(
+          "flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          isActive
+            ? "border-red-500/40 bg-red-500/10 text-red-200 hover:bg-red-500/20"
+            : "border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20",
+        )}
+        aria-label={isActive ? "Stop engine" : "Start engine"}
+        onClick={isActive ? onStop : onStart}
+        disabled={isInitializing}
+        ref={transportButtonRef}
+      >
+        {isInitializing ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : isActive ? (
+          <Square className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </button>
+    </>
+  );
+};

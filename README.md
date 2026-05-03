@@ -18,6 +18,7 @@ Herakoi is a **motion-sensing sonification experiment**: a webcam tracks your ha
 ```bash
 pnpm install
 pnpm dev          # launches Vite dev server
+pnpm dev:https    # HTTPS dev server (required for camera access on mobile devices)
 pnpm lint         # biome + tsc
 pnpm typecheck    # explicit project + config checks
 pnpm test         # vitest (full suite by default; hooks pass --changed)
@@ -31,4 +32,20 @@ Git commits automatically trigger Lefthook, which chains the following steps so 
 2. Biome lint and both TypeScript configs execute in parallel, mirroring `pnpm lint`.
 3. Vitest runs with `--changed` to cover only specs touched by current diffs, keeping the hook fast while still catching regressions.
 
-When you need those checks outside the commit flow, run the individual scripts (`pnpm run lint:biome:fix`, `pnpm lint`, `pnpm typecheck`, `pnpm test`) just as you would expect. `pnpm commit` launches Commitizen’s guided prompt, and Commitlint validates the message at `commit-msg`, so even first-time contributors get a compliant subject/body without memorizing the format.
+When you need those checks outside the commit flow, run the individual scripts (`pnpm run lint:biome:fix`, `pnpm lint`, `pnpm typecheck`, `pnpm test`) just as you would expect. `pnpm commit` launches Commitizen's guided prompt, and Commitlint validates the message at `commit-msg`, so even first-time contributors get a compliant subject/body without memorizing the format.
+
+### Analytics
+
+This project uses [Simple Analytics](https://simpleanalytics.com) for privacy-friendly usage tracking. Simple Analytics is GDPR-compliant by default, uses no cookies, and does not track personal information.
+
+**How it works:**
+- **Development mode** (`pnpm dev`): Events are logged to the browser console only, no data is sent to Simple Analytics
+- **Production mode** (`pnpm build`): Events are sent to the Simple Analytics dashboard
+
+**Custom events tracked:**
+- Camera/pipeline start and stop
+- Image uploads and selections
+- Pipeline errors
+- Settings changes (e.g., image cover mode toggles)
+
+The analytics implementation is documented in ADR 007 (`docs/adrs/007-simple-analytics-integration.md`). To add event tracking to new features, import helper functions from `src/lib/analytics.ts`.
