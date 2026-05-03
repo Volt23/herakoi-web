@@ -1,5 +1,6 @@
-import { Maximize, Minimize, SlidersHorizontal } from "lucide-react";
+import { Maximize, Minimize } from "lucide-react";
 import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
+import { DetectionModeToggle } from "./components/DetectionModeToggle";
 import { EngineStatusAnnouncer } from "./components/EngineStatusAnnouncer";
 import { BrandMark } from "./components/header/BrandMark";
 import { Controls } from "./components/header/Controls";
@@ -62,8 +63,6 @@ const App = () => {
     message: string;
     icon: typeof Maximize | typeof Minimize;
   } | null>(null);
-  const [showFullscreenHint, setShowFullscreenHint] = useState(fullscreenAvailable);
-  const [showPluginSwitchHint, setShowPluginSwitchHint] = useState(true);
   const fullscreenNoticeTimeoutRef = useRef<number | null>(null);
   const fullscreenSyncReadyRef = useRef(false);
   const previousFullscreenRef = useRef(false);
@@ -126,7 +125,6 @@ const App = () => {
   const toggleFullscreen = () => {
     if (typeof document === "undefined") return;
     if (!document.fullscreenEnabled) return;
-    setShowFullscreenHint(false);
     if (document.fullscreenElement) {
       void document.exitFullscreen().catch(() => {});
       return;
@@ -205,20 +203,6 @@ const App = () => {
       </div>
 
       <NotificationArea>
-        {showFullscreenHint && !isFullscreen && !fullscreenNotice ? (
-          <PluginNotification
-            message="Tip: double-click the canvas or use the fullscreen button in controls."
-            icon={Maximize}
-            onDismiss={() => setShowFullscreenHint(false)}
-          />
-        ) : null}
-        {showPluginSwitchHint ? (
-          <PluginNotification
-            message="Tip: open Settings, then use the Plugin selector at the top of each tab to switch plugin."
-            icon={SlidersHorizontal}
-            onDismiss={() => setShowPluginSwitchHint(false)}
-          />
-        ) : null}
         {fullscreenNotice ? (
           <PluginNotification message={fullscreenNotice.message} icon={fullscreenNotice.icon} />
         ) : null}
@@ -264,6 +248,13 @@ const App = () => {
           />
         </div>
       </header>
+
+      <div
+        className="pointer-events-auto absolute bottom-3 left-1/2 z-10 -translate-x-1/2 transition-opacity sm:bottom-4"
+        style={uiFadeStyle}
+      >
+        <DetectionModeToggle />
+      </div>
 
       <SettingsPanel sections={sections} className="transition-opacity" style={uiFadeStyle} />
       {SonificationPanel ? (

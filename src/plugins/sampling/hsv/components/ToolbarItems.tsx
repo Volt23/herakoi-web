@@ -1,4 +1,4 @@
-import { ChevronDown, Image as ImageIcon, Lock, LockOpen, Trash2, Upload } from "lucide-react";
+import { ChevronDown, Image as ImageIcon, Move, Trash2, Upload } from "lucide-react";
 import { type ChangeEvent, useEffect, useRef, useState } from "react";
 import type { PluginSettingsPanelProps } from "#src/core/plugin";
 import {
@@ -107,12 +107,12 @@ export const HSVToolbarItems = ({
               isPanEnabled && isCoverMode && "border-white/40 bg-white/10 text-white shadow-sm",
               !isCoverMode && "opacity-50",
             )}
-            aria-label={isPanEnabled ? "Lock image editing" : "Unlock image editing"}
+            aria-label={isPanEnabled ? "Disable move image" : "Move image"}
             aria-pressed={isPanEnabled}
             disabled={!isCoverMode}
             onClick={() => setPanInteractionEnabled(!isPanEnabled)}
           >
-            {isPanEnabled ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            <Move className="h-4 w-4" />
           </button>
           {coverMode && (
             <Popover>
