@@ -6,6 +6,7 @@ import { BrandMark } from "./components/header/BrandMark";
 import { Controls } from "./components/header/Controls";
 import { NotificationArea } from "./components/NotificationArea";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { SonificationModeToggle } from "./components/SonificationModeToggle";
 import { engineConfig } from "./engineConfig";
 import { usePluginUi } from "./hooks/plugin";
 import { useIdleDimmer, useUiDimFade } from "./hooks/ui";
@@ -262,6 +263,12 @@ const App = () => {
           <SonificationPanel />
         </div>
       ) : null}
+      <div
+        className="pointer-events-auto fixed right-2 z-10 transition-opacity sm:right-4"
+        style={{ ...uiFadeStyle, bottom: "calc(50% + 128px)" }}
+      >
+        <SonificationModeToggle />
+      </div>
 
       {/* Render detection plugin's dock panel (if it has one) */}
       {DockPanel ? (
