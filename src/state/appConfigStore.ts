@@ -17,8 +17,10 @@ import {
   type AppActivePlugins,
   type AppPluginConfigRegistry,
   defaultActivePlugins,
+  getDefaultActivePlugins,
   pluginConfigDefaults,
 } from "#src/pluginConfigRegistry";
+import { pointerDetectionPluginId } from "#src/plugins/detection/pointer/config";
 import { APP_CONFIG_KEY } from "#src/state/persistenceKeys";
 
 // ──────────────────────────────────────────────────
@@ -223,6 +225,20 @@ export const useAppConfigStore = create<AppConfigState & AppConfigActions>()(
     {
       name: APP_CONFIG_KEY,
       storage: configStorage,
+      version: 1,
+      migrate: (persistedState) => {
+        if (!isRecord(persistedState)) return defaultConfig;
+        // Apply the mobile default once to older saved settings. Subsequent
+        // explicit mode choices remain persisted, including hand tracking.
+        const activePlugins = sanitizeActivePlugins(persistedState.activePlugins);
+        if (getDefaultActivePlugins().detection === pointerDetectionPluginId) {
+          activePlugins.detection = pointerDetectionPluginId;
+        }
+        return {
+          ...persistedState,
+          activePlugins,
+        };
+      },
     },
   ),
 );
