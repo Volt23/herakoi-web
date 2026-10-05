@@ -16,7 +16,6 @@ import { engineConfig } from "#src/engineConfig";
 import {
   type AppActivePlugins,
   type AppPluginConfigRegistry,
-  defaultActivePlugins,
   getDefaultActivePlugins,
   pluginConfigDefaults,
 } from "#src/pluginConfigRegistry";
@@ -86,11 +85,11 @@ const defaultUiPreferences: UiPreferences = {
   dimLogoMark: false,
 };
 
-const defaultConfig: AppConfigState = {
-  activePlugins: defaultActivePlugins,
+const getDefaultConfig = (): AppConfigState => ({
+  activePlugins: getDefaultActivePlugins(),
   pluginConfigs: pluginConfigDefaults,
   uiPreferences: defaultUiPreferences,
-};
+});
 
 const knownPluginConfigIds = new Set(Object.keys(pluginConfigDefaults));
 const detectionIds = new Set(engineConfig.detection.map((plugin) => plugin.id));
@@ -121,7 +120,7 @@ const mergePluginConfigs = (incoming: unknown): AppPluginConfigRegistry => {
 };
 
 const sanitizeActivePlugins = (incoming: unknown): ActivePlugins => {
-  const fallback: ActivePlugins = { ...defaultActivePlugins };
+  const fallback: ActivePlugins = getDefaultActivePlugins();
   if (!isRecord(incoming)) return fallback;
 
   const next: ActivePlugins = { ...fallback };
@@ -153,7 +152,7 @@ const configStorage =
 export const useAppConfigStore = create<AppConfigState & AppConfigActions>()(
   persist(
     (set, get) => ({
-      ...defaultConfig,
+      ...getDefaultConfig(),
 
       setActivePlugin: (slot, pluginId) => {
         set((state) => ({
@@ -188,7 +187,7 @@ export const useAppConfigStore = create<AppConfigState & AppConfigActions>()(
       },
 
       resetAll: () => {
-        set(defaultConfig);
+        set(getDefaultConfig());
       },
 
       exportConfig: () => {
@@ -227,7 +226,7 @@ export const useAppConfigStore = create<AppConfigState & AppConfigActions>()(
       storage: configStorage,
       version: 1,
       migrate: (persistedState) => {
-        if (!isRecord(persistedState)) return defaultConfig;
+        if (!isRecord(persistedState)) return getDefaultConfig();
         // Apply the mobile default once to older saved settings. Subsequent
         // explicit mode choices remain persisted, including hand tracking.
         const activePlugins = sanitizeActivePlugins(persistedState.activePlugins);

@@ -24,7 +24,7 @@ export const getDefaultActivePlugins = (): AppActivePlugins => {
   const preferTouch =
     typeof window !== "undefined" &&
     typeof window.matchMedia === "function" &&
-    window.matchMedia("(max-width: 639px), (hover: none) and (pointer: coarse)").matches;
+    window.matchMedia("(hover: none) and (pointer: coarse)").matches;
   const pointerAvailable = engineConfig.detection.some(
     (plugin) => plugin.id === pointerDetectionPluginId,
   );
@@ -37,5 +37,3 @@ export const getDefaultActivePlugins = (): AppActivePlugins => {
     visualization: null,
   };
 };
-
-export const defaultActivePlugins = getDefaultActivePlugins();
