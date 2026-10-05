@@ -25,6 +25,13 @@ describe("ModeToggle", () => {
 
   afterEach(cleanup);
 
+  it("stays clickable inside pointer-events-none containers", () => {
+    renderToggle();
+    expect(screen.getByRole("group", { name: "Detection mode" }).className).toContain(
+      "pointer-events-auto",
+    );
+  });
+
   it("announces nothing until the mode changes", () => {
     const { container } = renderToggle();
     expect(liveRegion(container)?.textContent ?? "").toBe("");

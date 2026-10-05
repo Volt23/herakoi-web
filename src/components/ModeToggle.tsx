@@ -35,7 +35,7 @@ export const ModeToggle = ({
       <fieldset
         aria-label={label}
         className={cn(
-          "flex items-center gap-1 rounded-full border border-border/50 bg-black/55 p-1 backdrop-blur",
+          "pointer-events-auto flex items-center gap-1 rounded-full border border-border/50 bg-black/55 p-1 backdrop-blur",
           orientation === "vertical" && "flex-col",
         )}
       >
