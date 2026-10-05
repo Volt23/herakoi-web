@@ -30,7 +30,7 @@ const OscillatorVolumeMuteRail = () => {
 export const OscillatorSonificationPanel = (_props: PluginSettingsPanelProps<OscillatorConfig>) => {
   return (
     <aside
-      className="pointer-events-auto fixed right-2 top-1/2 z-10 flex h-[248px] w-12 -translate-y-1/2 flex-col items-center gap-3 rounded-full border border-border/60 bg-black/55 py-3 text-card-foreground shadow-card backdrop-blur sm:right-4"
+      className="pointer-events-auto flex h-[248px] w-12 flex-col items-center gap-3 rounded-full border border-border/60 bg-black/55 py-3 text-card-foreground shadow-card backdrop-blur"
       aria-label="Sonification audio controls"
     >
       <OscillatorAudioOutputSelector />

@@ -1,18 +1,31 @@
-import { Maximize, Minimize } from "lucide-react";
+import { AudioWaveform, Hand, Maximize, Minimize, MousePointer2, Piano } from "lucide-react";
 import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
-import { DetectionModeToggle } from "./components/DetectionModeToggle";
 import { EngineStatusAnnouncer } from "./components/EngineStatusAnnouncer";
 import { BrandMark } from "./components/header/BrandMark";
 import { Controls } from "./components/header/Controls";
+import { ModeToggle, type ModeToggleOption } from "./components/ModeToggle";
 import { NotificationArea } from "./components/NotificationArea";
 import { SettingsPanel } from "./components/SettingsPanel";
-import { SonificationModeToggle } from "./components/SonificationModeToggle";
 import { engineConfig } from "./engineConfig";
 import { usePluginUi } from "./hooks/plugin";
 import { useIdleDimmer, useUiDimFade } from "./hooks/ui";
 import { useSonificationEngine } from "./hooks/useSonificationEngine";
+import { mediaPipeDetectionPluginId } from "./plugins/detection/mediapipe/config";
+import { pointerDetectionPluginId } from "./plugins/detection/pointer/config";
+import { oscillatorSonificationPluginId } from "./plugins/sonification/oscillator/config";
+import { pianoSamplerPluginId } from "./plugins/sonification/piano-sampler/config";
 import { PluginNotification } from "./shared/components/notifications/PluginNotification";
 import { useUiPreferences } from "./state/appConfigStore";
+
+const detectionModes: ModeToggleOption[] = [
+  { pluginId: mediaPipeDetectionPluginId, label: "Hand tracking", icon: Hand },
+  { pluginId: pointerDetectionPluginId, label: "Mouse / touch", icon: MousePointer2 },
+];
+
+const sonificationModes: ModeToggleOption[] = [
+  { pluginId: oscillatorSonificationPluginId, label: "Synth oscillator", icon: AudioWaveform },
+  { pluginId: pianoSamplerPluginId, label: "Piano sampler", icon: Piano },
+];
 
 const App = () => {
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -254,20 +267,21 @@ const App = () => {
         className="pointer-events-auto absolute bottom-3 left-1/2 z-10 -translate-x-1/2 transition-opacity sm:bottom-4"
         style={uiFadeStyle}
       >
-        <DetectionModeToggle />
+        <ModeToggle slot="detection" label="Detection mode" options={detectionModes} />
       </div>
 
       <SettingsPanel sections={sections} className="transition-opacity" style={uiFadeStyle} />
-      {SonificationPanel ? (
-        <div className="transition-opacity" style={uiFadeStyle}>
-          <SonificationPanel />
-        </div>
-      ) : null}
       <div
-        className="pointer-events-auto fixed right-2 z-10 transition-opacity sm:right-4"
-        style={{ ...uiFadeStyle, bottom: "calc(50% + 128px)" }}
+        className="pointer-events-none fixed right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 transition-opacity sm:right-4 [@media(max-height:480px)]:flex-row"
+        style={uiFadeStyle}
       >
-        <SonificationModeToggle />
+        <ModeToggle
+          slot="sonification"
+          label="Sonification mode"
+          options={sonificationModes}
+          orientation="vertical"
+        />
+        {SonificationPanel ? <SonificationPanel /> : null}
       </div>
 
       {/* Render detection plugin's dock panel (if it has one) */}
