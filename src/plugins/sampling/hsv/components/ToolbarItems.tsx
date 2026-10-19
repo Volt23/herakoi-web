@@ -1,5 +1,5 @@
 import { ChevronDown, Image as ImageIcon, Move, Trash2, Upload } from "lucide-react";
-import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useId, useRef, useState } from "react";
 import type { PluginSettingsPanelProps } from "#src/core/plugin";
 import {
   Popover,
@@ -15,12 +15,14 @@ import { howItWorksImages } from "../data/howItWorksImages";
 import { useImageLibrary } from "../hooks/useImageLibrary";
 import { useHSVRuntimeStore } from "../runtimeStore";
 import type { ImageEntry } from "../types/image";
+import { moveImageInstructions } from "./ScreenReaderHints";
 
 export const HSVToolbarItems = ({
   config,
   setConfig,
 }: PluginSettingsPanelProps<HSVSamplingConfig>) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const moveHintId = useId();
   const [importDragActive, setImportDragActive] = useState(false);
   const [importActive, setImportActive] = useState(false);
 
@@ -110,10 +112,16 @@ export const HSVToolbarItems = ({
             aria-label={isPanEnabled ? "Disable move image" : "Move image"}
             aria-pressed={isPanEnabled}
             disabled={!isCoverMode}
+            aria-describedby={moveHintId}
             onClick={() => setPanInteractionEnabled(!isPanEnabled)}
           >
             <Move className="h-4 w-4" />
           </button>
+          <span id={moveHintId} className="sr-only">
+            {isCoverMode
+              ? moveImageInstructions
+              : "Available when the image fills the screen (cover mode)."}
+          </span>
           {coverMode && (
             <Popover>
               <PopoverTrigger asChild>

@@ -196,7 +196,11 @@ const App = () => {
           className="h-full w-full touch-none"
           role="img"
           aria-label="Herakoi audio-visualizer output"
+          aria-describedby={fullscreenAvailable ? "herakoi-canvas-hint" : undefined}
         />
+        <span id="herakoi-canvas-hint" className="sr-only">
+          Double-click to toggle fullscreen.
+        </span>
         {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: Overlay canvas is decorative and not interactive */}
         <canvas
           ref={imageOverlayRef}

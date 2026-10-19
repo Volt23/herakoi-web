@@ -43,4 +43,30 @@ describe("ModeToggle", () => {
     expect(useAppConfigStore.getState().activePlugins.detection).toBe("detection/pointer");
     expect(liveRegion(container)?.textContent).toBe("Detection mode: Mouse / touch");
   });
+
+  describe("with more than two options", () => {
+    const manyOptions = [
+      ...options,
+      { pluginId: "detection/other", label: "Other mode", icon: Hand },
+    ];
+
+    const renderPicker = () =>
+      render(<ModeToggle slot="detection" label="Detection mode" options={manyOptions} />);
+
+    it("collapses to a single button naming the active mode", () => {
+      renderPicker();
+      expect(screen.getAllByRole("button")).toHaveLength(1);
+      expect(screen.getByRole("button", { name: "Detection mode: Hand tracking" })).toBeTruthy();
+    });
+
+    it("opens a labelled list and closes it after picking", () => {
+      const { container } = renderPicker();
+      fireEvent.click(screen.getByRole("button", { name: "Detection mode: Hand tracking" }));
+      fireEvent.click(screen.getByRole("button", { name: "Mouse / touch" }));
+      expect(useAppConfigStore.getState().activePlugins.detection).toBe("detection/pointer");
+      expect(liveRegion(container)?.textContent).toBe("Detection mode: Mouse / touch");
+      expect(screen.queryByRole("group", { name: "Detection mode" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Detection mode: Mouse / touch" })).toBeTruthy();
+    });
+  });
 });
