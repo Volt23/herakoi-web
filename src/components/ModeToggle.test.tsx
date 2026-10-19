@@ -32,6 +32,15 @@ describe("ModeToggle", () => {
     );
   });
 
+  it("describes what the toggle switches for screen readers", () => {
+    renderToggle();
+    const group = screen.getByRole("group", { name: "Detection mode" });
+    const hint = document.getElementById(group.getAttribute("aria-describedby") ?? "");
+    expect(hint?.textContent).toBe(
+      "Switches the active detection plugin. More options are in Settings.",
+    );
+  });
+
   it("announces nothing until the mode changes", () => {
     const { container } = renderToggle();
     expect(liveRegion(container)?.textContent ?? "").toBe("");
@@ -56,7 +65,8 @@ describe("ModeToggle", () => {
     it("collapses to a single button naming the active mode", () => {
       renderPicker();
       expect(screen.getAllByRole("button")).toHaveLength(1);
-      expect(screen.getByRole("button", { name: "Detection mode: Hand tracking" })).toBeTruthy();
+      const trigger = screen.getByRole("button", { name: "Detection mode: Hand tracking" });
+      expect(document.getElementById(trigger.getAttribute("aria-describedby") ?? "")).toBeTruthy();
     });
 
     it("opens a labelled list and closes it after picking", () => {

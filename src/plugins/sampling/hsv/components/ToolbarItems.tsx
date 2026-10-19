@@ -15,7 +15,9 @@ import { howItWorksImages } from "../data/howItWorksImages";
 import { useImageLibrary } from "../hooks/useImageLibrary";
 import { useHSVRuntimeStore } from "../runtimeStore";
 import type { ImageEntry } from "../types/image";
-import { moveImageInstructions } from "./ScreenReaderHints";
+
+const moveImageInstructions =
+  "Desktop: drag to pan, wheel to zoom, Shift+wheel to rotate. Mobile: drag with one finger, pinch to zoom/rotate.";
 
 export const HSVToolbarItems = ({
   config,

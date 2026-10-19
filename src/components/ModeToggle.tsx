@@ -1,4 +1,4 @@
-import { type ComponentType, useState } from "react";
+import { type ComponentType, useId, useState } from "react";
 import type { AppActivePlugins } from "#src/pluginConfigRegistry";
 import { Popover, PopoverContent, PopoverTrigger } from "#src/shared/components/ui/popover";
 import { cn } from "#src/shared/utils/cn";
@@ -37,6 +37,12 @@ export const ModeToggle = ({
   const [activeId, setActiveId] = useActivePlugin(slot);
   const [announcement, setAnnouncement] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const hintId = useId();
+  const hint = (
+    <span id={hintId} className="sr-only">
+      Switches the active {slot} plugin. More options are in Settings.
+    </span>
+  );
 
   const select = (option: ModeToggleOption) => {
     setActiveId(option.pluginId as AppActivePlugins[typeof slot]);
@@ -79,6 +85,7 @@ export const ModeToggle = ({
               <button
                 type="button"
                 aria-label={`${label}: ${active.label}`}
+                aria-describedby={hintId}
                 className={cn(buttonClass, "bg-white/10 text-white")}
               >
                 <ActiveIcon className="h-4 w-4" />
@@ -95,6 +102,7 @@ export const ModeToggle = ({
             </fieldset>
           </PopoverContent>
         </Popover>
+        {hint}
         <ScreenReaderAnnouncer message={announcement} />
       </>
     );
@@ -104,10 +112,12 @@ export const ModeToggle = ({
     <>
       <fieldset
         aria-label={label}
+        aria-describedby={hintId}
         className={cn(railClass, orientation === "vertical" && "flex-col")}
       >
         {options.map((option) => renderOption(option, false))}
       </fieldset>
+      {hint}
       <ScreenReaderAnnouncer message={announcement} />
     </>
   );
