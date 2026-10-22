@@ -60,14 +60,14 @@ export const SonificationAudioPanel = ({ muted, children }: SonificationAudioPan
       >
         <ToggleIcon className="h-4 w-4" />
       </button>
-      {expanded ? (
-        <div
-          id={controlsId}
-          className="flex h-[224px] flex-col items-center gap-3 pb-1 [@media(max-height:480px)]:h-[156px]"
-        >
-          {children}
-        </div>
-      ) : null}
+      {/* Hidden rather than unmounted: the output selector keeps following device changes. */}
+      <div
+        id={controlsId}
+        hidden={!expanded}
+        className="flex h-[224px] flex-col items-center gap-3 pb-1 [@media(max-height:480px)]:h-[156px]"
+      >
+        {children}
+      </div>
     </aside>
   );
 };

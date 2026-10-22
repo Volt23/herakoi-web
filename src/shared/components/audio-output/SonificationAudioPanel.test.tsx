@@ -38,15 +38,17 @@ describe("SonificationAudioPanel", () => {
     mockCompact(true);
     renderPanel();
     const toggle = screen.getByRole("button", { name: "Volume controls" });
+    const controls = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
+    // Controls stay mounted while hidden: the output selector keeps following device changes.
+    expect(controls?.textContent).toBe("volume slider");
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("volume slider")).toBeNull();
+    expect(controls?.hidden).toBe(true);
 
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    const controls = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
-    expect(controls?.textContent).toBe("volume slider");
+    expect(controls?.hidden).toBe(false);
 
     fireEvent.click(toggle);
-    expect(screen.queryByText("volume slider")).toBeNull();
+    expect(controls?.hidden).toBe(true);
   });
 });
