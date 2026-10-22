@@ -81,6 +81,9 @@ export const ModeToggle = ({
     );
   };
 
+  // With fewer than two quick-switchable plugins there is nothing to switch.
+  if (options.length < 2) return null;
+
   if (options.length > MAX_INLINE_OPTIONS) {
     const active = options.find((option) => option.pluginId === activeId) ?? options[0];
     const ActiveIcon = active.icon;

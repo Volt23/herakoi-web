@@ -1,23 +1,27 @@
-import { useCallback, useSyncExternalStore } from "react";
-
-const canMatchMedia = () =>
-  typeof window !== "undefined" && typeof window.matchMedia === "function";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 /** Whether a CSS media query currently matches, updated as the viewport changes. */
 export const useMediaQuery = (query: string): boolean => {
+  const mediaQuery = useMemo(
+    () =>
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia(query)
+        : null,
+    [query],
+  );
+
   const subscribe = useCallback(
     (onChange: () => void) => {
-      if (!canMatchMedia()) return () => {};
-      const mediaQuery = window.matchMedia(query);
+      if (!mediaQuery) return () => {};
       mediaQuery.addEventListener("change", onChange);
       return () => mediaQuery.removeEventListener("change", onChange);
     },
-    [query],
+    [mediaQuery],
   );
 
   return useSyncExternalStore(
     subscribe,
-    () => canMatchMedia() && window.matchMedia(query).matches,
+    () => mediaQuery?.matches ?? false,
     () => false,
   );
 };

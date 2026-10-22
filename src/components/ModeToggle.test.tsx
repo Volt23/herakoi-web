@@ -62,6 +62,18 @@ describe("ModeToggle", () => {
     expect(liveRegion(container)?.textContent).toBe("Detection mode: Mouse / touch");
   });
 
+  it("renders nothing when fewer than two modes can be switched", () => {
+    const { container } = render(
+      <ModeToggle
+        slot="detection"
+        label="Detection mode"
+        options={options.slice(0, 1)}
+        onSelect={onSelect}
+      />,
+    );
+    expect(container.innerHTML).toBe("");
+  });
+
   it("does not switch again when the active mode is picked", () => {
     renderToggle();
     fireEvent.click(screen.getByRole("button", { name: "Hand tracking" }));

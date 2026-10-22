@@ -112,7 +112,7 @@ export const HSVToolbarItems = ({
               !isCoverMode && "opacity-50",
             )}
             aria-label="Move image"
-            aria-pressed={isPanEnabled}
+            aria-pressed={isCoverMode && isPanEnabled}
             // aria-disabled keeps the button focusable so its hint explains why it is unavailable.
             aria-disabled={!isCoverMode}
             aria-describedby={moveHintId}
