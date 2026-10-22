@@ -111,11 +111,14 @@ export const HSVToolbarItems = ({
               isPanEnabled && isCoverMode && "border-white/40 bg-white/10 text-white shadow-sm",
               !isCoverMode && "opacity-50",
             )}
-            aria-label={isPanEnabled ? "Disable move image" : "Move image"}
+            aria-label="Move image"
             aria-pressed={isPanEnabled}
-            disabled={!isCoverMode}
+            // aria-disabled keeps the button focusable so its hint explains why it is unavailable.
+            aria-disabled={!isCoverMode}
             aria-describedby={moveHintId}
-            onClick={() => setPanInteractionEnabled(!isPanEnabled)}
+            onClick={() => {
+              if (isCoverMode) setPanInteractionEnabled(!isPanEnabled);
+            }}
           >
             <Move className="h-4 w-4" />
           </button>
