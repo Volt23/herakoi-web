@@ -57,6 +57,19 @@ describe("appConfigStore", () => {
       expect(useAppConfigStore.getState().activePlugins.detection).toBe("detection/mediapipe");
     });
 
+    it("applies the touch default only when migrating from version 0", () => {
+      mockMobile(true);
+      const { migrate } = useAppConfigStore.persist.getOptions();
+      const persisted = {
+        activePlugins: {
+          ...useAppConfigStore.getState().activePlugins,
+          detection: "detection/mediapipe",
+        },
+      };
+      const migrated = migrate?.(persisted, 1) as { activePlugins: { detection: string } };
+      expect(migrated.activePlugins.detection).toBe("detection/mediapipe");
+    });
+
     it("preserves an existing desktop detection choice during migration", async () => {
       mockMobile(false);
       localStorage.setItem(

@@ -19,7 +19,6 @@ import {
   getDefaultActivePlugins,
   pluginConfigDefaults,
 } from "#src/pluginConfigRegistry";
-import { pointerDetectionPluginId } from "#src/plugins/detection/pointer/config";
 import { APP_CONFIG_KEY } from "#src/state/persistenceKeys";
 
 // ──────────────────────────────────────────────────
@@ -119,8 +118,10 @@ const mergePluginConfigs = (incoming: unknown): AppPluginConfigRegistry => {
   return merged;
 };
 
-const sanitizeActivePlugins = (incoming: unknown): ActivePlugins => {
-  const fallback: ActivePlugins = getDefaultActivePlugins();
+const sanitizeActivePlugins = (
+  incoming: unknown,
+  fallback: ActivePlugins = getDefaultActivePlugins(),
+): ActivePlugins => {
   if (!isRecord(incoming)) return fallback;
 
   const next: ActivePlugins = { ...fallback };
@@ -225,13 +226,14 @@ export const useAppConfigStore = create<AppConfigState & AppConfigActions>()(
       name: APP_CONFIG_KEY,
       storage: configStorage,
       version: 1,
-      migrate: (persistedState) => {
+      migrate: (persistedState, version) => {
         if (!isRecord(persistedState)) return getDefaultConfig();
-        // Apply the mobile default once to older saved settings. Subsequent
-        // explicit mode choices remain persisted, including hand tracking.
-        const activePlugins = sanitizeActivePlugins(persistedState.activePlugins);
-        if (getDefaultActivePlugins().detection === pointerDetectionPluginId) {
-          activePlugins.detection = pointerDetectionPluginId;
+        const defaults = getDefaultActivePlugins();
+        const activePlugins = sanitizeActivePlugins(persistedState.activePlugins, defaults);
+        // v0 had no device-specific default: settings saved on the old default
+        // detector move to the touch default once. Later choices stay as saved.
+        if (version < 1 && activePlugins.detection === engineConfig.detection[0].id) {
+          activePlugins.detection = defaults.detection;
         }
         return {
           ...persistedState,
