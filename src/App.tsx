@@ -284,8 +284,9 @@ const App = () => {
       </div>
 
       <SettingsPanel sections={sections} className="transition-opacity" style={uiFadeStyle} />
+      {/* On short viewports the expanded volume panel only fits beside the mode toggle. */}
       <div
-        className="pointer-events-none fixed right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 transition-opacity sm:right-4 [@media(max-height:480px)]:flex-row"
+        className="pointer-events-none fixed right-2 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center gap-3 transition-opacity sm:right-4 [@media(max-height:480px)]:has-[[data-expanded]]:flex-row"
         style={uiFadeStyle}
       >
         <ModeToggle

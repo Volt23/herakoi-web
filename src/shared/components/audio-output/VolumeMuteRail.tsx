@@ -25,7 +25,8 @@ export const VolumeMuteRail = ({
     <div className={cn("flex h-full flex-col items-center", className)}>
       <div className="flex flex-1 flex-col items-center justify-center">
         <Label className="sr-only">Master volume</Label>
-        <div className="h-[150px]">
+        {/* Shorter on low viewports so the expanded compact panel clears the header. */}
+        <div className="h-[150px] [@media(max-height:480px)]:h-[80px]">
           <Slider
             orientation="vertical"
             min={0}
