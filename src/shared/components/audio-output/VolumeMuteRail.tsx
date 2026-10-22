@@ -50,7 +50,7 @@ export const VolumeMuteRail = ({
           muted && "border-white/40 text-white",
         )}
         aria-pressed={muted}
-        aria-label={muted ? "Unmute sonification" : "Mute sonification"}
+        aria-label="Mute sonification"
       >
         <VolumeX className="h-4 w-4" />
       </Button>
