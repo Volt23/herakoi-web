@@ -57,12 +57,11 @@ const App = () => {
     PluginNotificationComponents,
   } = usePluginUi({
     config: engineConfig,
-    startTransport,
     stopTransport,
   });
 
-  const switchDetection = usePluginSwitch("detection", { startTransport, stopTransport });
-  const switchSonification = usePluginSwitch("sonification", { startTransport, stopTransport });
+  const switchDetection = usePluginSwitch("detection", { stopTransport });
+  const switchSonification = usePluginSwitch("sonification", { stopTransport });
 
   const isRunning = transportStatus.status === "running";
   const isInitializing = engineStatus === "initializing";

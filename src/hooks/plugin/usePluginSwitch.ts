@@ -5,17 +5,17 @@ import { useActivePlugin } from "../../state/appConfigStore";
 type SwitchableSlot = "detection" | "sampling" | "sonification";
 
 type UsePluginSwitchParams = {
-  startTransport: () => Promise<unknown>;
   stopTransport: () => void;
 };
 
 /**
- * Switch the active plugin of a slot: stop transport → switch plugin → restart.
- * Stopping first flushes active tones before the old handles are disposed.
+ * Switch the active plugin of a slot: stop transport, then switch plugin.
+ * Stopping first flushes active tones before the old handles are disposed. The shell's
+ * auto-start resumes playback once the new handles are ready, unless the user paused.
  */
 export const usePluginSwitch = <K extends SwitchableSlot>(
   slot: K,
-  { startTransport, stopTransport }: UsePluginSwitchParams,
+  { stopTransport }: UsePluginSwitchParams,
 ) => {
   const [, setActiveId] = useActivePlugin(slot);
 
@@ -23,8 +23,7 @@ export const usePluginSwitch = <K extends SwitchableSlot>(
     (id: string) => {
       stopTransport();
       setActiveId(id as ActivePlugins[K]);
-      void startTransport();
     },
-    [startTransport, stopTransport, setActiveId],
+    [stopTransport, setActiveId],
   );
 };

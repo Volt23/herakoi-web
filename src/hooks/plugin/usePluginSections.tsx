@@ -9,13 +9,11 @@ import { usePluginSwitch } from "./usePluginSwitch";
 
 type UsePluginSectionsParams = {
   config: EngineConfig;
-  startTransport: () => Promise<unknown>;
   stopTransport: () => void;
 };
 
 export const usePluginSections = ({
   config,
-  startTransport,
   stopTransport,
 }: UsePluginSectionsParams): SettingsPanelSection[] => {
   // 1. Subscribe to active plugin IDs and setters from store
@@ -28,8 +26,8 @@ export const usePluginSections = ({
   const [samplingConfig, setSamplingConfig] = usePluginConfig(activeSamplingId);
   const [detectionConfig, setDetectionConfig] = usePluginConfig(activeDetectionId);
 
-  // 3. Create individual plugin switch handlers (stop transport → switch plugin → re-init paused)
-  const transport = { startTransport, stopTransport };
+  // 3. Create individual plugin switch handlers (stop transport → switch plugin → auto-start)
+  const transport = { stopTransport };
   const handleSonificationSwitch = usePluginSwitch("sonification", transport);
   const handleSamplingSwitch = usePluginSwitch("sampling", transport);
   const handleDetectionSwitch = usePluginSwitch("detection", transport);
