@@ -1,5 +1,4 @@
 import { engineConfig } from "#src/engineConfig";
-import { pointerDetectionPluginId } from "#src/plugins/detection/pointer/config";
 
 export type AppPluginConfigRegistry = Record<string, Record<string, unknown>>;
 
@@ -25,13 +24,10 @@ export const getDefaultActivePlugins = (): AppActivePlugins => {
     typeof window !== "undefined" &&
     typeof window.matchMedia === "function" &&
     window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-  const pointerAvailable = engineConfig.detection.some(
-    (plugin) => plugin.id === pointerDetectionPluginId,
-  );
+  const touchDetection = engineConfig.detection.find((plugin) => plugin.preferredInput === "touch");
 
   return {
-    detection:
-      preferTouch && pointerAvailable ? pointerDetectionPluginId : engineConfig.detection[0].id,
+    detection: (preferTouch && touchDetection ? touchDetection : engineConfig.detection[0]).id,
     sampling: engineConfig.sampling[0].id,
     sonification: engineConfig.sonification[0].id,
     visualization: null,
