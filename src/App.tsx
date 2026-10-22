@@ -1,4 +1,4 @@
-import { AudioWaveform, Hand, Maximize, Minimize, MousePointer2, Piano } from "lucide-react";
+import { Maximize, Minimize } from "lucide-react";
 import { type MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { EngineStatusAnnouncer } from "./components/EngineStatusAnnouncer";
 import { BrandMark } from "./components/header/BrandMark";
@@ -7,25 +7,22 @@ import { ModeToggle, type ModeToggleOption } from "./components/ModeToggle";
 import { NotificationArea } from "./components/NotificationArea";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { engineConfig } from "./engineConfig";
-import { usePluginUi } from "./hooks/plugin";
+import { usePluginSwitch, usePluginUi } from "./hooks/plugin";
 import { useIdleDimmer, useUiDimFade } from "./hooks/ui";
 import { useSonificationEngine } from "./hooks/useSonificationEngine";
-import { mediaPipeDetectionPluginId } from "./plugins/detection/mediapipe/config";
-import { pointerDetectionPluginId } from "./plugins/detection/pointer/config";
-import { oscillatorSonificationPluginId } from "./plugins/sonification/oscillator/config";
-import { pianoSamplerPluginId } from "./plugins/sonification/piano-sampler/config";
 import { PluginNotification } from "./shared/components/notifications/PluginNotification";
 import { useUiPreferences } from "./state/appConfigStore";
 
-const detectionModes: ModeToggleOption[] = [
-  { pluginId: mediaPipeDetectionPluginId, label: "Hand tracking", icon: Hand },
-  { pluginId: pointerDetectionPluginId, label: "Mouse / touch", icon: MousePointer2 },
-];
+/** Plugins that declare an icon appear in the quick mode switch, named as in Settings. */
+const toModeOptions = (
+  plugins: ReadonlyArray<{ id: string; displayName: string; icon?: ModeToggleOption["icon"] }>,
+): ModeToggleOption[] =>
+  plugins.flatMap(({ id, displayName, icon }) =>
+    icon ? [{ pluginId: id, label: displayName, icon }] : [],
+  );
 
-const sonificationModes: ModeToggleOption[] = [
-  { pluginId: oscillatorSonificationPluginId, label: "Synth oscillator", icon: AudioWaveform },
-  { pluginId: pianoSamplerPluginId, label: "Piano sampler", icon: Piano },
-];
+const detectionModes = toModeOptions(engineConfig.detection);
+const sonificationModes = toModeOptions(engineConfig.sonification);
 
 const App = () => {
   const imageCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -63,6 +60,9 @@ const App = () => {
     startTransport,
     stopTransport,
   });
+
+  const switchDetection = usePluginSwitch("detection", { startTransport, stopTransport });
+  const switchSonification = usePluginSwitch("sonification", { startTransport, stopTransport });
 
   const isRunning = transportStatus.status === "running";
   const isInitializing = engineStatus === "initializing";
@@ -198,9 +198,11 @@ const App = () => {
           aria-label="Herakoi audio-visualizer output"
           aria-describedby={fullscreenAvailable ? "herakoi-canvas-hint" : undefined}
         />
-        <span id="herakoi-canvas-hint" className="sr-only">
-          Double-click to toggle fullscreen.
-        </span>
+        {fullscreenAvailable ? (
+          <span id="herakoi-canvas-hint" className="sr-only">
+            Double-click to toggle fullscreen.
+          </span>
+        ) : null}
         {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: Overlay canvas is decorative and not interactive */}
         <canvas
           ref={imageOverlayRef}
@@ -267,11 +269,18 @@ const App = () => {
         </div>
       </header>
 
+      {/* Below sm the bottom edge belongs to the dock panel, so the toggle moves to a left rail. */}
       <div
-        className="pointer-events-auto absolute bottom-3 left-1/2 z-10 -translate-x-1/2 transition-opacity sm:bottom-4"
+        className="pointer-events-none absolute left-2 top-1/2 z-10 -translate-y-1/2 transition-opacity sm:bottom-4 sm:left-1/2 sm:top-auto sm:-translate-x-1/2 sm:translate-y-0"
         style={uiFadeStyle}
       >
-        <ModeToggle slot="detection" label="Detection mode" options={detectionModes} />
+        <ModeToggle
+          slot="detection"
+          label="Detection mode"
+          options={detectionModes}
+          onSelect={switchDetection}
+          className="max-sm:flex-col"
+        />
       </div>
 
       <SettingsPanel sections={sections} className="transition-opacity" style={uiFadeStyle} />
@@ -283,6 +292,7 @@ const App = () => {
           slot="sonification"
           label="Sonification mode"
           options={sonificationModes}
+          onSelect={switchSonification}
           orientation="vertical"
         />
         {SonificationPanel ? <SonificationPanel /> : null}

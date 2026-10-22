@@ -1,5 +1,4 @@
 import { type ComponentType, useId, useState } from "react";
-import type { AppActivePlugins } from "#src/pluginConfigRegistry";
 import { Popover, PopoverContent, PopoverTrigger } from "#src/shared/components/ui/popover";
 import { cn } from "#src/shared/utils/cn";
 import { useActivePlugin } from "#src/state/appConfigStore";
@@ -15,7 +14,11 @@ type ModeToggleProps = {
   slot: "detection" | "sonification";
   label: string;
   options: ModeToggleOption[];
+  /** Switches the plugin; the shell passes a handler that also restarts transport. */
+  onSelect: (pluginId: string) => void;
   orientation?: "horizontal" | "vertical";
+  /** Extra classes for the rail, e.g. responsive layout overrides. */
+  className?: string;
 };
 
 /** Above this many options the inline switch becomes a single button that opens a picker. */
@@ -32,9 +35,11 @@ export const ModeToggle = ({
   slot,
   label,
   options,
+  onSelect,
   orientation = "horizontal",
+  className,
 }: ModeToggleProps) => {
-  const [activeId, setActiveId] = useActivePlugin(slot);
+  const [activeId] = useActivePlugin(slot);
   const [announcement, setAnnouncement] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const hintId = useId();
@@ -45,9 +50,11 @@ export const ModeToggle = ({
   );
 
   const select = (option: ModeToggleOption) => {
-    setActiveId(option.pluginId as AppActivePlugins[typeof slot]);
-    setAnnouncement(`${label}: ${option.label}`);
     setPickerOpen(false);
+    // Reselecting the active mode would restart transport for nothing.
+    if (option.pluginId === activeId) return;
+    onSelect(option.pluginId);
+    setAnnouncement(`${label}: ${option.label}`);
   };
 
   const renderOption = (option: ModeToggleOption, withLabel: boolean) => {
@@ -80,7 +87,7 @@ export const ModeToggle = ({
     return (
       <>
         <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <div className={railClass}>
+          <div className={cn(railClass, className)}>
             <PopoverTrigger asChild>
               <button
                 type="button"
@@ -113,7 +120,7 @@ export const ModeToggle = ({
       <fieldset
         aria-label={label}
         aria-describedby={hintId}
-        className={cn(railClass, orientation === "vertical" && "flex-col")}
+        className={cn(railClass, orientation === "vertical" && "flex-col", className)}
       >
         {options.map((option) => renderOption(option, false))}
       </fieldset>

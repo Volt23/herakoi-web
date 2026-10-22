@@ -1,0 +1,31 @@
+/**
+ * @vitest-environment happy-dom
+ */
+
+import { renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useAppConfigStore } from "#src/state/appConfigStore";
+import { usePluginSwitch } from "./usePluginSwitch";
+
+describe("usePluginSwitch", () => {
+  beforeEach(() => {
+    useAppConfigStore.getState().setActivePlugin("sonification", "sonification/oscillator");
+  });
+
+  it("stops the transport before switching and restarts it afterwards", () => {
+    const calls: string[] = [];
+    const stopTransport = vi.fn(() => {
+      calls.push(`stop:${useAppConfigStore.getState().activePlugins.sonification}`);
+    });
+    const startTransport = vi.fn(async () => {
+      calls.push(`start:${useAppConfigStore.getState().activePlugins.sonification}`);
+    });
+
+    const { result } = renderHook(() =>
+      usePluginSwitch("sonification", { startTransport, stopTransport }),
+    );
+    result.current("sonification/piano-sampler");
+
+    expect(calls).toEqual(["stop:sonification/oscillator", "start:sonification/piano-sampler"]);
+  });
+});
